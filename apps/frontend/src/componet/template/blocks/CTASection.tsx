@@ -1,5 +1,5 @@
 import React from "react";
-import { CTASection as CTASectionType } from "@ai/shared/types";
+import { CTASection as CTASectionType } from "@ai/shared";
 
 type Props = CTASectionType;
 

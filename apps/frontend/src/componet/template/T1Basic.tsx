@@ -1,5 +1,5 @@
 import React from "react";
-import { ProductDetailPage } from "@ai/shared/types";
+import { ProductDetailPage } from "@ai/shared";
 import USPBlock from "./blocks/USPBlock";
 import DetailGridBlock from "./blocks/DetailGridBlock";
 import CTASection from "./blocks/CTASection";

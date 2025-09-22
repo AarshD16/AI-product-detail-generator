@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import T1Basic from "../componet/template/T1Basic"; // 👈 adjust path if needed
 import Preview from "./preview"; // 👈 import Preview component
-import { ProductDetailPage } from "@ai/shared/types";
+import { ProductDetailPage } from "@ai/shared";
 
 
 
