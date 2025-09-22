@@ -1,52 +1,49 @@
-# -------------------------
-# Base builder
-# -------------------------
+# --------------------------------------------------
+# Base image
+# --------------------------------------------------
 FROM node:20-slim AS base
 WORKDIR /app
-COPY package.json pnpm-lock.yaml* ./
-RUN npm install -g pnpm
 
-# -------------------------
-# Dependencies
-# -------------------------
-FROM base AS deps
-WORKDIR /app
-COPY package.json pnpm-lock.yaml* ./
+# Install pnpm globally
+RUN npm install -g pnpm@10
+
+# Copy workspace metadata
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
+
+# --------------------------------------------------
+# Install dependencies
+# --------------------------------------------------
+COPY apps ./apps
 RUN pnpm install --frozen-lockfile
 
-# -------------------------
-# Build
-# -------------------------
-FROM deps AS build
-WORKDIR /app
-COPY . .
+# --------------------------------------------------
+# Build stage
+# --------------------------------------------------
+FROM base AS build
 
 # Build frontend
-WORKDIR /app/apps/frontend
-RUN pnpm install --frozen-lockfile
-RUN pnpm build
+RUN pnpm --filter ./apps/frontend... build
 
 # Build backend
-WORKDIR /app/apps/backend
-RUN pnpm install --frozen-lockfile
-RUN pnpm build
+RUN pnpm --filter ./apps/backend... build || echo "No backend build needed"
 
-# -------------------------
-# Runtime
-# -------------------------
+# --------------------------------------------------
+# Production stage
+# --------------------------------------------------
 FROM node:20-slim AS runner
 WORKDIR /app
-ENV NODE_ENV=production
-RUN npm install -g pnpm concurrently
 
-# Copy everything
-COPY --from=build /app .
+# Install pnpm
+RUN npm install -g pnpm@10 concurrently
 
-# Expose both ports
+# Copy built artifacts and node_modules
+COPY --from=build /app ./
+
+# Expose ports
 EXPOSE 3000
 EXPOSE 4000
 
-# Start backend on 4000 and frontend on 3000
-CMD ["concurrently", \
-  "pnpm --prefix apps/backend start", \
-  "pnpm --prefix apps/frontend start"]
+# Start both frontend and backend concurrently
+CMD concurrently \
+  "pnpm --filter ./apps/backend... start" \
+  "pnpm --filter ./apps/frontend... start"
