@@ -7,15 +7,15 @@ WORKDIR /app
 # Install pnpm globally
 RUN npm install -g pnpm@10 concurrently
 
-# Copy root workspace files
+# Copy workspace metadata
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-# Copy all apps/packages
+# Copy all apps and packages
 COPY apps ./apps
 COPY packages ./packages
 
 # Install all dependencies in workspace
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 # --------------------------------------------------
 # Build stage
@@ -28,7 +28,7 @@ RUN pnpm build
 
 # Build backend
 WORKDIR /app/apps/backend
-RUN pnpm build || echo "No backend build needed"
+RUN pnpm build
 
 # --------------------------------------------------
 # Production stage
@@ -36,17 +36,25 @@ RUN pnpm build || echo "No backend build needed"
 FROM node:20-slim AS runner
 WORKDIR /app
 
-# Install pnpm + concurrently
+# Install pnpm and concurrently in runner
 RUN npm install -g pnpm@10 concurrently
 
-# Copy built artifacts + node_modules
-COPY --from=build /app ./
+# Copy node_modules from build stage
+COPY --from=build /app/node_modules ./node_modules
+
+# Copy built frontend and backend
+COPY --from=build /app/apps/frontend/.next ./apps/frontend/.next
+COPY --from=build /app/apps/backend/dist ./apps/backend/dist
+
+# Copy all packages and source files (needed for runtime)
+COPY --from=build /app/packages ./packages
+COPY --from=build /app/apps ./apps
 
 # Expose ports
 EXPOSE 3000
 EXPOSE 4000
 
-# Start frontend and backend concurrently
+# Start both frontend and backend concurrently
 CMD concurrently \
   "pnpm --filter ./apps/backend... start" \
   "pnpm --filter ./apps/frontend... start"
