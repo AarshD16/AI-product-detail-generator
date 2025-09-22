@@ -1,5 +1,5 @@
 import React from "react";
-import { DetailGridBlock as DetailGridBlockType } from "../../../shared/types";
+import { DetailGridBlock as DetailGridBlockType } from "../../../../shared/types";
 
 type Props = DetailGridBlockType;
 
