@@ -1,5 +1,5 @@
 import React from "react";
-import { USPBlock as USPBlockType } from "../../../shared/types";
+import { USPBlock as USPBlockType } from "../../../../shared/types";
 
 type Props = USPBlockType;
 
