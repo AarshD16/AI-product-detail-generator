@@ -8,9 +8,10 @@
   "start": "next start"
   },
   "dependencies": {
-    "next": "15.5.3",
-    "react": "19.1.1",
-    "react-dom": "19.1.1"
+  "next": "15.5.3",
+  "react": "19.1.1",
+  "react-dom": "19.1.1",
+  "@ai/shared": "workspace:*"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
