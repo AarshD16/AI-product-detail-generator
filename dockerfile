@@ -4,17 +4,17 @@
 FROM node:20-slim AS base
 WORKDIR /app
 
-# Install pnpm globally
+# Install pnpm and concurrently globally
 RUN npm install -g pnpm@10 concurrently
 
-# Copy workspace metadata
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Copy workspace metadata first
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
 
 # Copy all apps and packages
 COPY apps ./apps
 COPY packages ./packages
 
-# Install all dependencies in workspace
+# Install dependencies
 RUN pnpm install
 
 # --------------------------------------------------
@@ -22,35 +22,35 @@ RUN pnpm install
 # --------------------------------------------------
 FROM base AS build
 
+WORKDIR /app
+
 # Build frontend
-WORKDIR /app/apps/frontend
-RUN pnpm build
+RUN pnpm --filter ./apps/frontend... build
 
 # Build backend
-WORKDIR /app/apps/backend
-RUN pnpm build
+RUN pnpm --filter ./apps/backend... build
 
 # --------------------------------------------------
-# Production stage
+# Production / Runner stage
 # --------------------------------------------------
 FROM node:20-slim AS runner
 WORKDIR /app
 
-# Install pnpm and concurrently in runner
+# Install pnpm and concurrently globally
 RUN npm install -g pnpm@10 concurrently
 
-# Copy node_modules from build stage
-COPY --from=build /app/node_modules ./node_modules
-
-# Copy built frontend and backend
+# Copy built frontend and backend, plus node_modules
 COPY --from=build /app/apps/frontend/.next ./apps/frontend/.next
+COPY --from=build /app/apps/frontend/public ./apps/frontend/public
 COPY --from=build /app/apps/backend/dist ./apps/backend/dist
-
-# Copy all packages and source files (needed for runtime)
+COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages ./packages
 COPY --from=build /app/apps ./apps
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=build /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
-# Expose ports
+# Expose frontend and backend ports
 EXPOSE 3000
 EXPOSE 4000
 
