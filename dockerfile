@@ -53,5 +53,5 @@ ENV BACKEND_PORT=4000
 # - backend binds 4000 (internal only)
 CMD sh -c "\
   pnpm --filter ./apps/backend... start & \
-  pnpm --filter ./apps/frontend... start -- --port $PORT \
+  pnpm --filter ./apps/frontend... start \
 "
