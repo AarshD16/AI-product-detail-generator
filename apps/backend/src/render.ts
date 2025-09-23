@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import sharp from "sharp";
 import archiver from "archiver";
-import { ProductDetailPage } from "@ai/shared/types";
+import { ProductDetailPage } from "@ai/shared";
 
 const outputDir = path.join(__dirname, "../renders");
 if (!fs.existsSync(outputDir)) {
