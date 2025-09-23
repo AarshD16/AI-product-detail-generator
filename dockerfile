@@ -1,60 +1,53 @@
-# --------------------------------------------------
-# Base image
-# --------------------------------------------------
+# -----------------------------
+# Base image for building
+# -----------------------------
 FROM node:20-slim AS base
 WORKDIR /app
 
 # Install pnpm and concurrently globally
 RUN npm install -g pnpm@10 concurrently
 
-# Copy workspace metadata first
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
-
-# Copy all apps and packages
+# Copy workspace files first
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps ./apps
 COPY packages ./packages
 
 # Install dependencies
 RUN pnpm install
 
-# --------------------------------------------------
+# -----------------------------
 # Build stage
-# --------------------------------------------------
+# -----------------------------
 FROM base AS build
-
 WORKDIR /app
 
-# Build frontend
+# Build frontend and backend
 RUN pnpm --filter ./apps/frontend... build
-
-# Build backend
 RUN pnpm --filter ./apps/backend... build
 
-# --------------------------------------------------
-# Production / Runner stage
-# --------------------------------------------------
+# -----------------------------
+# Production stage
+# -----------------------------
 FROM node:20-slim AS runner
 WORKDIR /app
 
-# Install pnpm and concurrently globally
+# Install pnpm and concurrently globally in runner
 RUN npm install -g pnpm@10 concurrently
 
-# Copy built frontend and backend, plus node_modules
+# Copy built artifacts
 COPY --from=build /app/apps/frontend/.next ./apps/frontend/.next
 COPY --from=build /app/apps/frontend/public ./apps/frontend/public
 COPY --from=build /app/apps/backend/dist ./apps/backend/dist
+COPY --from=build /app/apps/backend/package.json ./apps/backend/package.json
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages ./packages
 COPY --from=build /app/apps ./apps
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/pnpm-lock.yaml ./pnpm-lock.yaml
-COPY --from=build /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
-# Expose frontend and backend ports
+# Expose ports
 EXPOSE 3000
 EXPOSE 4000
 
-# Start both frontend and backend concurrently
-CMD concurrently \
+# Start both apps using npx to ensure pnpm is found
+CMD npx concurrently \
   "pnpm --filter ./apps/backend... start" \
   "pnpm --filter ./apps/frontend... start"
