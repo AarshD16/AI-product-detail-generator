@@ -51,6 +51,7 @@ ENV BACKEND_PORT=4000
 # Run both apps:
 # - frontend binds $PORT (Render requirement)
 # - backend binds 4000 (internal only)
-CMD concurrently \
-  "pnpm --filter ./apps/backend... start" \
-  "pnpm --filter ./apps/frontend... start -- --port $PORT"
+CMD sh -c "\
+  pnpm --filter ./apps/backend... start & \
+  pnpm --filter ./apps/frontend... start -- --port $PORT \
+"
