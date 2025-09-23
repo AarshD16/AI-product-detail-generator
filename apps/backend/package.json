@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "ts-node src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js --port=4000"
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",

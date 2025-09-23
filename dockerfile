@@ -31,7 +31,6 @@ RUN pnpm --filter ./apps/backend... build
 FROM node:20-slim AS runner
 WORKDIR /app
 
-# Install pnpm and concurrently globally in runner
 RUN npm install -g pnpm@10 concurrently
 
 # Copy built artifacts
@@ -43,11 +42,15 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages ./packages
 COPY --from=build /app/apps ./apps
 
-# Expose ports
+# Expose only $PORT (frontend)
 EXPOSE 3000
-EXPOSE 4000
 
-# Start both apps using npx to ensure pnpm is found
-CMD npx concurrently \
+# Render sets $PORT automatically
+ENV BACKEND_PORT=4000
+
+# Run both apps:
+# - frontend binds $PORT (Render requirement)
+# - backend binds 4000 (internal only)
+CMD concurrently \
   "pnpm --filter ./apps/backend... start" \
-  "pnpm --filter ./apps/frontend... start"
+  "pnpm --filter ./apps/frontend... start -- --port $PORT"
